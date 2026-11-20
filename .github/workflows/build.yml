@@ -89,6 +89,7 @@ jobs:
             --configurationPath="build-system/appstore-configuration.json" \
             --xcodeManagedCodesigning \
             --disableProvisioningProfiles \
+            --disableExtensions \
             --configuration=release_arm64 \
             --buildNumber="$BUILD_NUMBER" \
             --outputBuildArtifactsPath="build/artifacts"
