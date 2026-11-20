@@ -31,10 +31,6 @@ jobs:
           mkdir -p "$HOME/telegram-bazel-cache"
           mkdir -p "$RUNNER_TEMP/bazel-root"
 
-          # Work around Swift 6.3.3's SIL ownership-lifetime crash in ShareScreen.
-          # This disables the compiler's ownership verifier; it does not change app/server settings.
-          echo 'build --swiftcopt=-Xfrontend --swiftcopt=-disable-sil-ownership-verifier' >> "$GITHUB_WORKSPACE/.bazelrc"
-          cp "$GITHUB_WORKSPACE/.bazelrc" /Users/Shared/telegram-ios/.bazelrc
 
       - name: Allow unsigned device bundles without provisioning profiles
         shell: bash
