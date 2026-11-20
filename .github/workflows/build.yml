@@ -91,30 +91,41 @@ jobs:
               raise SystemExit(0)
 
           root = Path("/Users/Shared/telegram-ios")
-          patches = {
-              root / "submodules/Display/Source/ReservedArea.swift": (
-                  """    if #available(iOS 27.1, *) {
-                  return view.reservedRegions(kind: .occlusion).filter(\\.isActive).map(\\.frame)
-              }
-              return []""",
-                  """    // The selected SDK predates UIView.reservedRegions; use the existing table-based fallback.
-              return []"""
+          patches = [
+              (
+                  root / "submodules/Display/Source/ReservedArea.swift",
+                  [
+                      "    if #available(iOS 27.1, *) {",
+                      "        return view.reservedRegions(kind: .occlusion).filter(\\.isActive).map(\\.frame)",
+                      "    }",
+                      "    return []",
+                  ],
+                  [
+                      "    // Older SDK: retain the existing table-based fallback.",
+                      "    return []",
+                  ],
               ),
-              root / "submodules/Display/Source/WindowContent.swift": (
-                  """        if #available(iOS 27.1, *) {
-                      return self.eventView.reservedRegions(kind: .division).first(where: \\.isActive)?.frame
-                  }
-                  return nil""",
-                  """        // The selected SDK predates UIView.reservedRegions; no system division report is available.
-                  return nil"""
+              (
+                  root / "submodules/Display/Source/WindowContent.swift",
+                  [
+                      "        if #available(iOS 27.1, *) {",
+                      "            return self.eventView.reservedRegions(kind: .division).first(where: \\.isActive)?.frame",
+                      "        }",
+                      "        return nil",
+                  ],
+                  [
+                      "        // Older SDK: no system division report is available.",
+                      "        return nil",
+                  ],
               ),
-          }
+          ]
 
-          for path, (old, new) in patches.items():
+          for path, old_lines, new_lines in patches:
               source = path.read_text()
+              old = "\\n".join(old_lines)
               if old not in source:
                   raise SystemExit(f"Expected source block not found in {path}; refusing an unsafe patch.")
-              path.write_text(source.replace(old, new, 1))
+              path.write_text(source.replace(old, "\\n".join(new_lines), 1))
               print(f"Patched SDK-incompatible reservedRegions call in {path.name}")
           PY
 
