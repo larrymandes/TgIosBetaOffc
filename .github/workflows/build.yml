@@ -20,20 +20,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Select Xcode from versions.json
-        shell: bash
-        run: |
-          set -euo pipefail
-          XCODE_VERSION="$(python3 -c 'import json; print(json.load(open("versions.json"))["xcode"])')"
-          XCODE_APP="/Applications/Xcode_${XCODE_VERSION}.app"
-          if [[ ! -d "$XCODE_APP" ]]; then
-            echo "Requested Xcode $XCODE_VERSION not found. Installed Xcodes:"
-            ls -1 /Applications | grep '^Xcode' || true
-            exit 1
-          fi
-          sudo xcode-select -s "$XCODE_APP/Contents/Developer"
-          xcodebuild -version
-
       - name: Create canonical source directory
         shell: bash
         run: |
@@ -43,6 +29,31 @@ jobs:
           mv "/Users/Shared/$(basename "$GITHUB_WORKSPACE")" /Users/Shared/telegram-ios
           mkdir -p /Users/Shared/telegram-ios/build-input
           mkdir -p "$HOME/telegram-bazel-cache"
+          sudo mkdir -p /private/var/tmp/_bazel_containerhost
+
+      - name: Select available Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          REQUESTED_XCODE="$(python3 -c 'import json; print(json.load(open("versions.json"))["xcode"])')"
+          REQUESTED_APP="/Applications/Xcode_${REQUESTED_XCODE}.app"
+
+          if [[ -d "$REQUESTED_APP" ]]; then
+            SELECTED_APP="$REQUESTED_APP"
+            echo "Using requested Xcode $REQUESTED_XCODE"
+          else
+            echo "Xcode $REQUESTED_XCODE is not installed on this runner."
+            echo "Selecting the newest installed Xcode instead."
+            SELECTED_APP="$(find /Applications -maxdepth 1 -type d -name 'Xcode*.app' | sort -V | tail -n 1)"
+            if [[ -z "$SELECTED_APP" ]]; then
+              echo "ERROR: no Xcode installation found"
+              exit 1
+            fi
+            echo "Fallback: $SELECTED_APP"
+          fi
+
+          sudo xcode-select -s "$SELECTED_APP/Contents/Developer"
+          xcodebuild -version
 
       - name: Restore Bazel caches
         uses: actions/cache/restore@v4
