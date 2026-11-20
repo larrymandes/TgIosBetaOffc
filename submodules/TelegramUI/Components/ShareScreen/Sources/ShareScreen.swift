@@ -328,6 +328,36 @@ public final class ShareScreen: ViewControllerComponentContainer {
     private let animateOut = ActionSlot<Action<()>>()
     fileprivate var caption = NSAttributedString(string: "")
 
+    private static func makePreferredAction(
+        preferredAction: ShareControllerPreferredAction,
+        subject: Subject,
+        showInChat: ((EngineRawMessage) -> Void)?,
+        context: AccountContext,
+        updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?
+    ) -> ShareControllerPreferredAction {
+        guard case .default = preferredAction else {
+            return preferredAction
+        }
+        guard let showInChat else {
+            return preferredAction
+        }
+        guard case let .messages(messages) = subject, messages.count == 1, let message = messages.first else {
+            return preferredAction
+        }
+
+        let presentationData: PresentationData
+        if let updatedPresentationData {
+            presentationData = updatedPresentationData.initial
+        } else {
+            presentationData = context.sharedContext.currentPresentationData.with { $0 }
+        }
+        let title = presentationData.strings.SharedMedia_ViewInChat
+        let action = ShareControllerAction(title: title, action: {
+            showInChat(message)
+        })
+        return .custom(action: action)
+    }
+
     public init(context: AccountContext, subject: Subject, externalShare: Bool = true, presetText: String? = nil, shareStory: (() -> Void)? = nil, preferredAction: ShareControllerPreferredAction = .default, externalShareSubject: ShareControllerSubject? = nil, shareAsLink: Bool = false, forceTheme: PresentationTheme? = nil, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, externalConfiguration: ShareScreenExternalConfiguration? = nil, mediaParameters: ShareControllerSubject.MediaParameters? = nil, segmentedValues: [ShareScreenSegmentedValue]? = nil, collectibleItemInfo: TelegramCollectibleItemInfo? = nil, forcedActionTitle: String? = nil, showInChat: ((EngineRawMessage) -> Void)? = nil, immediatePeerId: EnginePeer.Id? = nil) {
         self.externalConfiguration = externalConfiguration
         self.context = context
@@ -341,14 +371,13 @@ public final class ShareScreen: ViewControllerComponentContainer {
         self.collectibleItemInfo = collectibleItemInfo
         self.forcedActionTitle = forcedActionTitle
         self.shareStory = shareStory
-        var preferredAction = preferredAction
-        if case .default = preferredAction, let showInChat, case let .messages(messages) = subject, messages.count == 1, let message = messages.first {
-            let title = (updatedPresentationData?.initial ?? context.sharedContext.currentPresentationData.with { $0 }).strings.SharedMedia_ViewInChat
-            preferredAction = .custom(action: ShareControllerAction(title: title, action: {
-                showInChat(message)
-            }))
-        }
-        self.preferredAction = preferredAction
+        self.preferredAction = ShareScreen.makePreferredAction(
+            preferredAction: preferredAction,
+            subject: subject,
+            showInChat: showInChat,
+            context: context,
+            updatedPresentationData: updatedPresentationData
+        )
         self.externalShareSubject = externalShareSubject
         self.shareAsLink = shareAsLink
         self.model = ShareScreenState(context: context)
