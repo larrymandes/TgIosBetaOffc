@@ -72,6 +72,52 @@ jobs:
           sudo xcode-select -s "$SELECTED_APP/Contents/Developer"
           xcodebuild -version
 
+      - name: Backport iOS 27.1 reserved-region APIs for older SDKs
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_VERSION="$(xcrun --sdk iphoneos --show-sdk-version)"
+          echo "Selected iPhoneOS SDK: $SDK_VERSION"
+
+          python3 - "$SDK_VERSION" <<'PY'
+          import sys
+          from pathlib import Path
+
+          def version(value):
+              return tuple(int(part) for part in value.split(".")[:3])
+
+          if version(sys.argv[1]) >= (27, 1, 0):
+              print("SDK supports reservedRegions; keeping native iOS 27.1 implementation.")
+              raise SystemExit(0)
+
+          root = Path("/Users/Shared/telegram-ios")
+          patches = {
+              root / "submodules/Display/Source/ReservedArea.swift": (
+                  """    if #available(iOS 27.1, *) {
+                  return view.reservedRegions(kind: .occlusion).filter(\\.isActive).map(\\.frame)
+              }
+              return []""",
+                  """    // The selected SDK predates UIView.reservedRegions; use the existing table-based fallback.
+              return []"""
+              ),
+              root / "submodules/Display/Source/WindowContent.swift": (
+                  """        if #available(iOS 27.1, *) {
+                      return self.eventView.reservedRegions(kind: .division).first(where: \\.isActive)?.frame
+                  }
+                  return nil""",
+                  """        // The selected SDK predates UIView.reservedRegions; no system division report is available.
+                  return nil"""
+              ),
+          }
+
+          for path, (old, new) in patches.items():
+              source = path.read_text()
+              if old not in source:
+                  raise SystemExit(f"Expected source block not found in {path}; refusing an unsafe patch.")
+              path.write_text(source.replace(old, new, 1))
+              print(f"Patched SDK-incompatible reservedRegions call in {path.name}")
+          PY
+
       - name: Restore Bazel caches
         uses: actions/cache/restore@v4
         with:
