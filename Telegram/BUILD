@@ -372,7 +372,10 @@ objc_library(
     name = "Main",
     module_name = "Main",
     srcs = [
-        "Telegram-iOS/main.m"
+        "Telegram-iOS/main.m",
+    ],
+    sdk_frameworks = [
+        "Intents",
     ],
 )
 
