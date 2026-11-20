@@ -29,7 +29,7 @@ jobs:
           mv "/Users/Shared/$(basename "$GITHUB_WORKSPACE")" /Users/Shared/telegram-ios
           mkdir -p /Users/Shared/telegram-ios/build-input
           mkdir -p "$HOME/telegram-bazel-cache"
-          sudo mkdir -p /private/var/tmp/_bazel_containerhost
+          mkdir -p "$RUNNER_TEMP/bazel-root"
 
       - name: Select available Xcode
         shell: bash
@@ -59,7 +59,6 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            /private/var/tmp/_bazel_containerhost
             /Users/Shared/telegram-ios/build-input
             ~/telegram-bazel-cache
           key: beta-sillygram-bazel-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('versions.json', 'MODULE.bazel.lock') }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -84,7 +83,7 @@ jobs:
           mkdir -p build/artifacts
           python3 -u build-system/Make/Make.py \
             --overrideXcodeVersion \
-            --bazelUserRoot="/private/var/tmp/_bazel_containerhost" \
+            --bazelUserRoot="$RUNNER_TEMP/bazel-root" \
             --cacheDir="$HOME/telegram-bazel-cache" \
             build \
             --configurationPath="build-system/appstore-configuration.json" \
@@ -122,7 +121,6 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
-            /private/var/tmp/_bazel_containerhost
             /Users/Shared/telegram-ios/build-input
             ~/telegram-bazel-cache
           key: beta-sillygram-bazel-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('versions.json', 'MODULE.bazel.lock') }}-${{ github.run_id }}-${{ github.run_attempt }}
