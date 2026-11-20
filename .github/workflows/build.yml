@@ -31,6 +31,33 @@ jobs:
           mkdir -p "$HOME/telegram-bazel-cache"
           mkdir -p "$RUNNER_TEMP/bazel-root"
 
+      - name: Allow unsigned device bundles without provisioning profiles
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("/Users/Shared/telegram-ios/build-system/bazel-rules/rules_apple/apple/internal/partials/provisioning_profile.bzl")
+          source = path.read_text()
+          old = """    if not profile_artifact:
+          fail(
+              "\\n".join([
+                  "ERROR: In {}:".format(str(rule_label)),
+                  "Building for device, but no provisioning_profile attribute was set.",
+              ]),
+          )
+          """
+          new = """    if not profile_artifact:
+          # Unsigned device builds intentionally omit embedded provisioning profiles.
+          return struct(bundle_files = [])
+          """
+          if source.count(old) != 1:
+              raise SystemExit("Expected exactly one rules_apple provisioning-profile guard; refusing to patch")
+          path.write_text(source.replace(old, new))
+          print("Patched rules_apple: missing profile now means an unsigned bundle.")
+          PY
+
       - name: Select available Xcode
         shell: bash
         run: |
