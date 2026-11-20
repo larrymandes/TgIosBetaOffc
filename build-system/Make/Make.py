@@ -270,6 +270,8 @@ class BazelCommandLine:
 
     def get_additional_build_arguments(self):
         combined_arguments = []
+        # Produce an unsigned iOS bundle: rules_apple skips codesign actions and profile validation.
+        combined_arguments += ['--features=disable_legacy_signing']
         if self.split_submodules:
             combined_arguments += [
                 # https://github.com/bazelbuild/rules_swift
