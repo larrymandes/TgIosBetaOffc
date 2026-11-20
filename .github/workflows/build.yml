@@ -41,10 +41,8 @@ jobs:
           path = Path("/Users/Shared/telegram-ios/build-system/bazel-rules/rules_apple/apple/internal/partials/provisioning_profile.bzl")
           source = path.read_text()
           start = source.index("    if not profile_artifact:")
-          end = source.index("\\n\\n    # Create intermediate file", start)
-          replacement = """    if not profile_artifact:
-          # Unsigned device builds intentionally omit embedded provisioning profiles.
-          return struct(bundle_files = [])"""
+          end = source.index("\n\n    # Create intermediate file", start)
+          replacement = "    if not profile_artifact:\n        # Unsigned device builds intentionally omit embedded provisioning profiles.\n        return struct(bundle_files = [])"
           source = source[:start] + replacement + source[end:]
           path.write_text(source)
           print("Patched rules_apple: missing profile now means an unsigned bundle.")
