@@ -122,10 +122,10 @@ jobs:
 
           for path, old_lines, new_lines in patches:
               source = path.read_text()
-              old = "\\n".join(old_lines)
+              old = "\n".join(old_lines)
               if old not in source:
                   raise SystemExit(f"Expected source block not found in {path}; refusing an unsafe patch.")
-              path.write_text(source.replace(old, "\\n".join(new_lines), 1))
+              path.write_text(source.replace(old, "\n".join(new_lines), 1))
               print(f"Patched SDK-incompatible reservedRegions call in {path.name}")
           PY
 
