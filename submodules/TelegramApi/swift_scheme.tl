@@ -2942,7 +2942,33 @@ channels.editTitle#566decd0 channel:InputChannel title:string = Updates;
 channels.editPhoto#f12e57c9 channel:InputChannel photo:InputChatPhoto = Updates;
 channels.checkUsername#10e6bd2c channel:InputChannel username:string = Bool;
 channels.updateUsername#3514b3de channel:InputChannel username:string = Bool;
-channels.joinChannel#7f6a1e22 channel:InputChannel = messages.ChatInviteJoinResult;
+channels.joinChannel#db00f90b flags:# for_news:flags.0?true channel:InputChannel = messages.ChatInviteJoinResult;
+
+feedPosition#5059dc73 date:int peer:Peer id:int = FeedPosition;
+
+feed.feedMessagesNotModified#db1a3503 = feed.FeedMessages;
+feed.feedMessages#afafef32 flags:# max_position:flags.0?FeedPosition min_position:flags.1?FeedPosition read_max_position:flags.2?FeedPosition messages:Vector<Message> chats:Vector<Chat> users:Vector<User> = feed.FeedMessages;
+
+feedItemMessage#7e73b3a5 message:Message = FeedItem;
+feedItemMessageGroup#da7c718e messages:Vector<Message> = FeedItem;
+feedItemInterestCategories#6be7187b = FeedItem;
+
+feed.forYouFeed#dab4d40c flags:# items:Vector<FeedItem> chats:Vector<Chat> users:Vector<User> = feed.ForYouFeed;
+
+feed.interestCategory#6c4666e3 flags:# id:int title:string emoji:flags.0?string emoji_document_id:flags.1?long = feed.InterestCategory;
+
+feed.interestCategoriesNotModified#79cf2195 = feed.InterestCategories;
+feed.interestCategories#233fdaf5 categories:Vector<feed.InterestCategory> selected:Vector<int> = feed.InterestCategories;
+
+updateReadFeed#054ffa18 filter_id:int max_position:FeedPosition = Update;
+
+feed.getFeed#d0924b34 flags:# offset_to_max_read:flags.3?true filter_id:int offset_position:flags.0?FeedPosition add_offset:int limit:int max_position:flags.1?FeedPosition min_position:flags.2?FeedPosition hash:long = feed.FeedMessages;
+feed.readFeed#b436c1ff filter_id:int max_position:FeedPosition = Updates;
+feed.getForYou#33b8e5eb flags:# query:flags.0?string limit:int = feed.ForYouFeed;
+feed.getInterestCategories#ba7a1dba hash:long = feed.InterestCategories;
+feed.setInterestCategories#5a191a7b category_ids:Vector<int> = Bool;
+feed.likePost#1b4b627e peer:InputPeer msg_id:int = Bool;
+feed.dislikePost#4d70175c peer:InputPeer msg_id:int = Bool;
 channels.leaveChannel#f836aa95 channel:InputChannel = Updates;
 channels.inviteToChannel#c9e33d54 channel:InputChannel users:Vector<InputUser> = messages.InvitedUsers;
 channels.deleteChannel#c0111fe3 channel:InputChannel = Updates;
