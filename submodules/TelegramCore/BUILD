@@ -10,6 +10,7 @@ swift_library(
     ]),
     copts = [
         "-warnings-as-errors",
+        "-DTELEGRAM_NEWS_FEED_API",
     ],
     deps = [
         "//submodules/TelegramApi:TelegramApi",
